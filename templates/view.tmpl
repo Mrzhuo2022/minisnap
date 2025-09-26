@@ -1,0 +1,65 @@
+{{ define "view.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{{ .Title }}</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #f8fafc;
+			--fg: #0f172a;
+			--accent: #2563eb;
+			--code-bg: #f1f5f9;
+			--muted: #64748b;
+		}
+		:root[data-theme="dark"] {
+			--bg: #1D2228;
+			--fg: #e2e8f0;
+			--accent: #8da2c9;
+			--code-bg: #1f2937;
+			--muted: #9ca3af;
+		}
+		body { font-family: "Inter", sans-serif; max-width: 760px; margin: 3.5rem auto; padding: 0 1.5rem 4.5rem; line-height: 1.75; color: var(--fg); background: var(--bg); transition: background .3s ease, color .3s ease; position: relative; }
+		h1, h2, h3 { line-height: 1.2; margin-top: 2.5rem; }
+		pre { background: var(--code-bg); padding: 1rem 1.25rem; border-radius: 12px; overflow: auto; }
+		code { font-family: "Fira Code", monospace; }
+		a { color: var(--accent); }
+		.meta { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+		.theme-toggle { position: fixed; top: 1.6rem; right: 1.6rem; border: none; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.35); color: inherit; font-size: 0.95rem; cursor: pointer; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16); }
+		.theme-toggle:hover { background: rgba(148, 163, 184, 0.5); }
+		@media (max-width: 720px) {
+			body { margin: 2.5rem auto; padding-bottom: 3.5rem; }
+			.theme-toggle { top: 1.25rem; right: 1.25rem; }
+		}
+	</style>
+</head>
+<body>
+	{{ if .AllowThemeSwitch }}<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><span class="icon" aria-hidden="true">🌞</span></button>{{ end }}
+	{{ if and .AllowThemeSwitch .PublishedAt }}<div class="meta">Published {{ .PublishedAt }}{{ if .WasUpdated }} · Updated {{ .UpdatedAt }}{{ end }}</div>{{ end }}
+	<article>
+		{{ .HTML }}
+	</article>
+	{{ if .AllowThemeSwitch }}
+	<script>
+		(function () {
+			const root = document.documentElement;
+			const toggle = document.getElementById('theme-toggle');
+			const icon = toggle.querySelector('.icon');
+			const applyTheme = (theme) => {
+				root.setAttribute('data-theme', theme);
+				icon.textContent = theme === 'dark' ? '🌚' : '🌞';
+			};
+			let current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+			applyTheme(current);
+			toggle.addEventListener('click', () => {
+				current = current === 'dark' ? 'light' : 'dark';
+				applyTheme(current);
+			});
+		})();
+	</script>
+	{{ end }}
+</body>
+</html>
+{{ end }}

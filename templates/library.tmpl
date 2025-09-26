@@ -1,0 +1,195 @@
+{{ define "library.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{{ .Title }}</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #f8fafc;
+			--fg: #0f172a;
+			--panel: #ffffff;
+			--surface: #f1f5f9;
+			--border: rgba(148, 163, 184, 0.28);
+			--accent: #2563eb;
+			--accent-fg: #ffffff;
+			--muted: #64748b;
+			--shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+		}
+		:root[data-theme="dark"] {
+			--bg: #0f172a;
+			--fg: #e2e8f0;
+			--panel: #111827;
+			--surface: #182030;
+			--border: rgba(148, 163, 184, 0.2);
+			--accent: #8da2c9;
+			--accent-fg: #111827;
+			--muted: #94a3b8;
+			--shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+		}
+		body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; transition: background .3s ease, color .3s ease; }
+		.page { max-width: 960px; margin: 0 auto; padding: 2.6rem 1.5rem 3.6rem; display: flex; flex-direction: column; gap: 1.9rem; }
+		header { display: flex; flex-direction: column; gap: 1.4rem; }
+		.title-block h1 { margin: 0; font-size: 1.85rem; }
+		.meta { font-size: 0.92rem; color: var(--muted); }
+		.top-actions { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+		.nav-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 1rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; color: inherit; font-weight: 500; background: var(--surface); }
+		.nav-link:hover { border-color: var(--accent); color: var(--accent); }
+		.logout-form { margin: 0; }
+		.logout-form button { background: transparent; border: 1px solid var(--border); color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem; cursor: pointer; }
+		.logout-form button:hover { border-color: var(--accent); }
+		.search-card { background: var(--panel); border-radius: 22px; padding: 2.2rem; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 1.25rem; }
+		.search-form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+		.search-form input { flex: 1; min-width: 220px; padding: 0.75rem 1rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
+		.search-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+		.search-form button { background: var(--accent); color: var(--accent-fg); border: none; padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
+		.search-form button:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(37, 99, 235, 0.25); }
+		.stats { font-size: 0.9rem; color: var(--muted); }
+		.entry-table { width: 100%; border-collapse: collapse; }
+		.entry-table th, .entry-table td { text-align: left; padding: 0.9rem 0.75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.2); vertical-align: top; }
+		.entry-table th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+		.entry-table td.actions { white-space: nowrap; }
+		.entry-table .sep { margin: 0 0.45rem; color: var(--muted); }
+		.entry-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+		.entry-table a:hover { text-decoration: underline; }
+		.share-btn { border: none; background: none; color: var(--accent); font-weight: 500; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit; line-height: 1.4; }
+		.share-btn:hover { text-decoration: underline; }
+		.share-btn:disabled { color: var(--muted); cursor: default; text-decoration: none; }
+		.delete-form { display: inline; }
+		.delete-btn { border: none; background: none; color: #ef4444; font-weight: 500; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit; line-height: 1.4; }
+		.delete-btn:hover { text-decoration: underline; }
+		.delete-btn:disabled { color: var(--muted); cursor: default; text-decoration: none; }
+		.empty { font-size: 1.05rem; color: var(--muted); text-align: center; padding: 2rem 0; }
+		.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.2rem 0.75rem; background: rgba(37, 99, 235, 0.12); color: var(--accent); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+		:root[data-theme="dark"] .badge { background: rgba(141, 162, 201, 0.16); }
+		.description { max-width: 460px; color: inherit; }
+		@media (max-width: 900px) {
+			.entry-table thead { display: none; }
+			.entry-table, .entry-table tbody, .entry-table tr, .entry-table td { display: block; width: 100%; }
+			.entry-table tr { border-bottom: 1px solid rgba(148, 163, 184, 0.2); margin-bottom: 1.5rem; padding-bottom: 1.5rem; }
+			.entry-table td { padding: 0.4rem 0; }
+			.entry-table td::before { content: attr(data-label); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.2rem; }
+			.entry-table td.actions { margin-top: 0.75rem; }
+		}
+	</style>
+</head>
+<body>
+	<div class="page">
+		<header>
+			<div class="title-block">
+				<h1>{{ .Title }}</h1>
+				<p class="meta">Track every piece of content, search by slug or text snippet, and jump straight into editing.</p>
+			</div>
+			<div class="top-actions">
+				<a class="nav-link" href="/admin">Editor</a>
+				<form class="logout-form" method="post" action="/logout">
+					<button type="submit">Log out</button>
+				</form>
+			</div>
+		</header>
+		<section class="search-card">
+			<form class="search-form" method="get" action="/admin/library">
+				<input type="search" name="q" value="{{ .SearchTerm }}" placeholder="Search by slug or content…" />
+				<button type="submit">Search</button>
+			</form>
+			<p class="stats">
+				Total {{ .TotalEntries }} entries
+				{{ if .HasFilter }}· Showing {{ .FilteredCount }} result{{ if ne .FilteredCount 1 }}s{{ end }} for “{{ .SearchTerm }}”{{ end }}
+			</p>
+			{{ if .Entries }}
+			<table class="entry-table">
+				<thead>
+					<tr>
+						<th>Slug</th>
+						<th>Renderer</th>
+						<th>Description</th>
+						<th>Published</th>
+						<th>Updated</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+				{{ range .Entries }}
+					<tr>
+						<td data-label="Slug"><strong>{{ .Slug }}</strong></td>
+						<td data-label="Renderer"><span class="badge">{{ .Renderer }}</span></td>
+						<td data-label="Description" class="description">{{ if .Description }}{{ .Description }}{{ else }}—{{ end }}</td>
+						<td data-label="Published">{{ .PublishedAt }}</td>
+						<td data-label="Updated">{{ if .WasUpdated }}{{ .UpdatedAt }}{{ else }}—{{ end }}</td>
+						<td data-label="Actions" class="actions">
+							<button type="button" class="share-btn" data-url="/{{ .Slug }}">Share</button>
+							<span class="sep">·</span>
+							<a href="/{{ .Slug }}" target="_blank" rel="noopener">View</a>
+							<span class="sep">·</span>
+							<a href="/{{ .Slug }}/edit">Edit</a>
+							<span class="sep">·</span>
+							<form class="delete-form" method="post" action="/{{ .Slug }}/delete">
+								<button type="submit" class="delete-btn" data-slug="{{ .Slug }}">Delete</button>
+							</form>
+						</td>
+					</tr>
+				{{ end }}
+				</tbody>
+			</table>
+			{{ else }}
+				<p class="empty">{{ if .HasFilter }}No entries matched your search.{{ else }}No content yet. Create your first entry from the editor!{{ end }}</p>
+			{{ end }}
+		</section>
+	</div>
+	<script>
+		(function () {
+			const buttons = document.querySelectorAll('.share-btn');
+			const copyToClipboard = async (text) => {
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					return navigator.clipboard.writeText(text);
+				}
+				return new Promise((resolve, reject) => {
+					const textarea = document.createElement('textarea');
+					textarea.value = text;
+					textarea.setAttribute('readonly', '');
+					textarea.style.position = 'fixed';
+					textarea.style.top = '-9999px';
+					document.body.appendChild(textarea);
+					textarea.select();
+					const success = document.execCommand('copy');
+					document.body.removeChild(textarea);
+					success ? resolve() : reject(new Error('copy failed'));
+				});
+			};
+			buttons.forEach((btn) => {
+				const originalText = btn.textContent;
+				btn.addEventListener('click', async () => {
+					const url = new URL(btn.dataset.url, window.location.origin).href;
+					btn.disabled = true;
+					try {
+						await copyToClipboard(url);
+						btn.textContent = 'Copied!';
+					} catch (err) {
+						btn.textContent = 'Copy failed';
+					}
+					setTimeout(() => {
+						btn.textContent = originalText;
+						btn.disabled = false;
+					}, 2000);
+				});
+			});
+
+			document.querySelectorAll('.delete-form').forEach((form) => {
+				const btn = form.querySelector('.delete-btn');
+				form.addEventListener('submit', (event) => {
+					const slug = btn?.dataset.slug || '';
+					if (!window.confirm(`Delete entry "${slug}"?`)) {
+						event.preventDefault();
+						return;
+					}
+					btn.disabled = true;
+					btn.textContent = 'Deleting...';
+				});
+			});
+		})();
+	</script>
+</body>
+</html>
+{{ end }}
