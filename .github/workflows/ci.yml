@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.22.0'
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -81,8 +81,8 @@ jobs:
           context: .
           push: true
           tags: |
-            evarle/minisnap:latest
-            evarle/minisnap:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/minisnap:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/minisnap:${{ github.sha }}
 
       - name: Show image digest
         run: |
