@@ -41,16 +41,20 @@ go run ./cmd/server
 
 ### 3. Docker 运行
 
+无需本地构建，可直接使用发布在 Docker Hub 的镜像：
+
 ```pwsh
-docker build -t minisnap:latest .
-docker run --rm -p 8080:8080 --env-file .env minisnap:latest
+docker pull evarle/minisnap:latest
+docker run --rm -p 8080:8080 --env-file .env evarle/minisnap:latest
 ```
 
 后台与内容目录会在容器内 `/app/content`。若希望持久化，请挂载卷：
 
 ```pwsh
-docker run --rm -p 8080:8080 --env-file .env -v ${PWD}/content:/app/content minisnap:latest
+docker run --rm -p 8080:8080 --env-file .env -v ${PWD}/content:/app/content evarle/minisnap:latest
 ```
+
+若确实需要自定义镜像，可使用 `docker build -t yourname/minisnap:tag .` 本地构建。
 
 > 镜像内置的默认密码为 `devpass`，强烈建议通过 `.env` 或 `-e ADMIN_PASSWORD=...` 覆盖。
 
@@ -84,6 +88,21 @@ content          # 已发布内容（运行时生成）
 - **会话管理**：基于安全 HTTP Cookie，支持登录状态保持
 - **构建优化**：Docker 多阶段构建，最终镜像约 20MB
 
+### 常用命令
+
+仓库内提供 `Makefile`，可快速执行常见操作：
+
+```pwsh
+make build          # 编译生成 bin/minisnap
+make test           # 运行 go test ./...
+make lint           # 检查 gofmt + go vet
+make docker-build   # 构建本地 Docker 镜像（默认标签 evarle/minisnap:latest）
+make docker-push    # 推送镜像至 Docker Hub（需先 docker login）
+make docker-run     # 以当前目录内容启动容器
+```
+
+可通过环境变量覆盖默认镜像标签，例如：`make docker-build IMAGE=myname/minisnap TAG=v1`。
+
 ### 调试技巧
 
 - **本地热重载**：配合 [air](https://github.com/cosmtrek/air) 等工具可以监听文件改动自动重启进程。
@@ -102,6 +121,26 @@ dlv debug ./cmd/server -- -admin-password=devpass -content-dir=content
 go test ./...
 ```
 
+上述命令也可通过 `make test` 快速执行。
+
+### 持续集成
+
+仓库包含 GitHub Actions 工作流 `.github/workflows/ci.yml`，在 `push` 或 `pull request` 时自动执行：
+
+- `gofmt` 检查（格式不符直接失败）
+- `go vet` 静态分析
+- `go test ./...` 单元测试
+- `go build ./cmd/server` 编译验证
+- `docker build`（仅验证 Dockerfile 是否可构建）
+
+当推送到 `main` 且仓库配置了 Secrets `DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`（建议使用 Docker Hub Access Token）时，CI 会额外执行
+`docker/build-push-action`，将镜像发布到 `evarle/minisnap:latest` 与 `evarle/minisnap:<commit-sha>`。
+
+> 配置方式：进入 GitHub 仓库 Settings → Secrets and variables → Actions，分别新增
+> `DOCKERHUB_USERNAME`（Docker Hub 用户名）与 `DOCKERHUB_TOKEN`（Docker Hub Access Token）。
+
+默认使用 Go 1.22。若需扩展（如多架构构建、Helm 打包等），可在现有工作流基础上新增作业或步骤。
+
 ## 使用示例
 
 ### 发布 Markdown 内容
@@ -118,8 +157,8 @@ go test ./...
 
 ### 生产环境部署
 ```pwsh
-# 1. 构建镜像
-docker build -t minisnap:latest .
+# 1. 获取官方镜像
+docker pull evarle/minisnap:latest
 
 # 2. 创建数据目录
 mkdir -p ./data/content
@@ -130,7 +169,7 @@ docker run -d --name minisnap \
   -e ADMIN_PASSWORD=your-secure-password \
   -v ./data/content:/app/content \
   --restart unless-stopped \
-  minisnap:latest
+  evarle/minisnap:latest
 ```
 
 ## 后续拓展想法

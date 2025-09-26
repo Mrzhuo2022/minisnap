@@ -7,6 +7,8 @@
 *.so
 *.dylib
 test-*
+bin/
+build/
 
 # Go test artifacts
 *.test
