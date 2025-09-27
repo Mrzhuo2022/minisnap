@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.22.0-alpine3.20 AS build
+FROM golang:1.22-alpine AS build
 
 WORKDIR /src
 COPY go.mod ./
 COPY go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
+RUN go mod download
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build go build -o /out/minisnap ./cmd/server
+RUN go build -o /out/minisnap ./cmd/server
 
-FROM alpine:3.21
+FROM alpine:3.20
 
 WORKDIR /app
 COPY --from=build /out/minisnap ./minisnap
