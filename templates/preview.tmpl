@@ -8,46 +8,58 @@
 	<style>
 		:root {
 			color-scheme: light dark;
-			--bg: #f4f6fb;
+			--bg: #f8fafc;
 			--fg: #0f172a;
 			--accent: #2563eb;
-			--muted: #64748b;
-			--surface: #ffffff;
 			--code-bg: #f1f5f9;
+			--muted: #64748b;
 		}
 		:root[data-theme="dark"] {
-			--bg: #0f172a;
+			--bg: #1D2228;
 			--fg: #e2e8f0;
 			--accent: #8da2c9;
-			--muted: #9ca3af;
-			--surface: #111827;
 			--code-bg: #1f2937;
+			--muted: #9ca3af;
 		}
-		body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; transition: background .3s ease, color .3s ease; }
-		.container { max-width: 860px; margin: 0 auto; padding: 3rem 1.75rem 4rem; display: flex; flex-direction: column; gap: 1.75rem; position: relative; }
-		.alert { background: var(--surface); border-radius: 16px; padding: 1.25rem 1.5rem; border: 1px solid rgba(148, 163, 184, 0.3); display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12); }
-		.alert strong { font-weight: 700; }
-		.alert span { color: var(--muted); font-size: 0.9rem; }
-		.article { line-height: 1.75; background: var(--surface); border-radius: 22px; padding: 2.2rem; border: 1px solid rgba(148, 163, 184, 0.22); box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1); }
-		.article h1, .article h2, .article h3 { line-height: 1.2; margin-top: 2.4rem; }
-		.article pre { background: var(--code-bg); padding: 1rem 1.25rem; border-radius: 12px; overflow-x: auto; }
-		.article code { font-family: "Fira Code", monospace; }
+		body { font-family: "Inter", sans-serif; max-width: 760px; margin: 3.5rem auto; padding: 0 1.5rem 4.5rem; line-height: 1.75; color: var(--fg); background: var(--bg); transition: background .3s ease, color .3s ease; position: relative; }
+		h1, h2, h3 { line-height: 1.2; margin-top: 2.5rem; }
+		pre { background: var(--code-bg); padding: 1rem 1.25rem; border-radius: 12px; overflow: auto; }
+		code { font-family: "Fira Code", monospace; }
+		a { color: var(--accent); }
+		.meta { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+		.theme-toggle { position: fixed; top: 1.6rem; right: 1.6rem; border: none; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.35); color: inherit; font-size: 0.95rem; cursor: pointer; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16); }
+		.theme-toggle:hover { background: rgba(148, 163, 184, 0.5); }
 		@media (max-width: 720px) {
-			.container { padding-top: 2.5rem; padding-bottom: 3rem; }
-			.article { padding: 1.65rem; }
+			body { margin: 2.5rem auto; padding-bottom: 3.5rem; }
+			.theme-toggle { top: 1.25rem; right: 1.25rem; }
 		}
 	</style>
 </head>
 <body>
-	<div class="container">
-		<div class="alert">
-			<strong>Preview mode</strong>
-			<span>Content is not saved yet{{ if .GeneratedAt }} · Generated {{ .GeneratedAt }}{{ end }}{{ if .Slug }} · slug: {{ .Slug }}{{ end }}</span>
-		</div>
-		<article class="article">
-			{{ .HTML }}
-		</article>
-	</div>
+	{{ if .AllowThemeSwitch }}<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"><span class="icon" aria-hidden="true">🌞</span></button>{{ end }}
+	<div class="meta">Preview mode · Content is not saved yet{{ if .GeneratedAt }} · Generated {{ .GeneratedAt }}{{ end }}{{ if .Slug }} · slug: {{ .Slug }}{{ end }}</div>
+	<article>
+		{{ .HTML }}
+	</article>
+	{{ if .AllowThemeSwitch }}
+	<script>
+		(function () {
+			const root = document.documentElement;
+			const toggle = document.getElementById('theme-toggle');
+			const icon = toggle.querySelector('.icon');
+			const applyTheme = (theme) => {
+				root.setAttribute('data-theme', theme);
+				icon.textContent = theme === 'dark' ? '🌚' : '🌞';
+			};
+			let current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+			applyTheme(current);
+			toggle.addEventListener('click', () => {
+				current = current === 'dark' ? 'light' : 'dark';
+				applyTheme(current);
+			});
+		})();
+	</script>
+	{{ end }}
 </body>
 </html>
 {{ end }}
