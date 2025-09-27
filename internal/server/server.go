@@ -271,9 +271,10 @@ func (s *Server) previewEntry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.renderTemplate(w, "preview.tmpl", map[string]any{
-		"Title":       "Preview",
-		"HTML":        html,
-		"GeneratedAt": formatTime(time.Now()),
+		"Title":            "Preview",
+		"HTML":             html,
+		"GeneratedAt":      formatTime(time.Now()),
+		"AllowThemeSwitch": renderer == content.RendererMarkdown,
 	})
 }
 
