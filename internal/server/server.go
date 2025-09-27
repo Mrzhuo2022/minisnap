@@ -91,6 +91,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /admin/library", s.requireAuth(s.showLibrary))
 	s.mux.HandleFunc("GET /admin", s.requireAuth(s.showEditor))
 	s.mux.HandleFunc("POST /admin", s.requireAuth(s.createEntry))
+	s.mux.HandleFunc("POST /admin/preview", s.requireAuth(s.previewEntry))
 
 	s.mux.HandleFunc("GET /{slug}/edit", s.requireAuth(s.showEdit))
 	s.mux.HandleFunc("POST /{slug}/edit", s.requireAuth(s.updateEntry))
@@ -238,6 +239,41 @@ func (s *Server) createEntry(w http.ResponseWriter, r *http.Request) {
 		"PublishedAt": formatTime(entry.CreatedAt),
 		"UpdatedAt":   formatTime(entry.UpdatedAt),
 		"WasUpdated":  wasUpdated,
+	})
+}
+
+func (s *Server) previewEntry(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		s.renderError(w, http.StatusBadRequest, "Invalid form data")
+		return
+	}
+
+	renderer := content.RendererType(r.FormValue("renderer"))
+	raw := r.FormValue("content")
+
+	// Validate renderer type
+	if renderer != content.RendererMarkdown && renderer != content.RendererHTML {
+		s.renderError(w, http.StatusBadRequest, "Invalid renderer type")
+		return
+	}
+
+	// Create a temporary entry for preview
+	tempEntry := content.Entry{
+		Renderer: renderer,
+		Raw:      raw,
+	}
+
+	html, err := content.RenderHTML(tempEntry)
+	if err != nil {
+		slog.Error("render preview", "error", err)
+		s.renderError(w, http.StatusInternalServerError, "Render Failed")
+		return
+	}
+
+	s.renderTemplate(w, "preview.tmpl", map[string]any{
+		"Title":       "Preview",
+		"HTML":        html,
+		"GeneratedAt": formatTime(time.Now()),
 	})
 }
 

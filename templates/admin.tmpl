@@ -54,6 +54,8 @@
 		.form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 		button.primary { background: var(--accent); color: var(--accent-fg); border: none; padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
 		button.primary:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22); }
+		button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
+		button.secondary:hover { background: var(--accent); color: var(--accent-fg); transform: translateY(-1px); }
 		.notice { margin: 0; font-size: 0.88rem; color: var(--muted); }
 		.hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
 		@media (max-width: 720px) {
@@ -103,11 +105,49 @@
 				</div>
 				<div class="form-actions">
 					<button class="primary" type="submit">Save & Publish</button>
+					<button class="secondary" type="button" id="preview-btn">Preview</button>
 				</div>
 				<p class="notice">Entries are saved immediately after you publish them. You can revisit this page to edit at any time.</p>
 			</form>
 		</section>
 	</div>
+	<script>
+		document.getElementById('preview-btn').addEventListener('click', function() {
+			const form = document.getElementById('editor-form');
+			const formData = new FormData(form);
+			
+			// Show loading state
+			const previewBtn = this;
+			const originalText = previewBtn.textContent;
+			previewBtn.textContent = 'Previewing...';
+			previewBtn.disabled = true;
+			
+			// Create a form to submit to preview endpoint
+			const previewForm = document.createElement('form');
+			previewForm.method = 'POST';
+			previewForm.action = '/admin/preview';
+			previewForm.target = '_blank';
+			
+			// Add form data to the preview form
+			for (const [key, value] of formData.entries()) {
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.name = key;
+				input.value = value;
+				previewForm.appendChild(input);
+			}
+			
+			document.body.appendChild(previewForm);
+			previewForm.submit();
+			document.body.removeChild(previewForm);
+			
+			// Reset button state
+			setTimeout(() => {
+				previewBtn.textContent = originalText;
+				previewBtn.disabled = false;
+			}, 500);
+		});
+	</script>
 </body>
 </html>
 {{ end }}
