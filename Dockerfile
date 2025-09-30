@@ -12,12 +12,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # pre-create runtime directories since final image is distroless (no shell)
 RUN mkdir -p /out/content
 
+# You may pin a digest for reproducibility if desired. Keeping tag for readability for now.
 FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /app
 COPY --from=build /out/minisnap /app/minisnap
 COPY templates /app/templates
-COPY --from=build /out/content /app/content
+COPY --from=build --chown=nonroot:nonroot /out/content /app/content
 
 ENV BIND_ADDR=":8080" \
     CONTENT_DIR="content"
