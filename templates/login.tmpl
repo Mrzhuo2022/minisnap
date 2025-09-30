@@ -1,0 +1,58 @@
+{{ define "login.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{{ .Title }}</title>
+	<style>
+		*, *::before, *::after { box-sizing: border-box; }
+		:root {
+			color-scheme: light dark;
+			--bg: #eef2ff;
+			--fg: #0f172a;
+			--card-bg: #ffffff;
+			--accent: #2563eb;
+			--accent-fg: #ffffff;
+			--muted: #6b7280;
+			--border: rgba(148, 163, 184, 0.5);
+		}
+		:root[data-theme="dark"] {
+			--bg: #0f172a;
+			--fg: #e2e8f0;
+			--card-bg: #111827;
+			--accent: #94a3b8;
+			--accent-fg: #111827;
+			--muted: #9ca3af;
+			--border: rgba(148, 163, 184, 0.3);
+		}
+		body { margin: 0; font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2.5rem 1.5rem; transition: background .3s ease, color .3s ease; }
+		main { position: relative; width: min(420px, calc(100% - 2rem)); background: var(--card-bg); border-radius: 20px; padding: 3rem 2.5rem; box-shadow: 0 24px 44px rgba(15, 23, 42, 0.16); }
+		h1 { margin: 0 0 1.75rem; font-size: 1.9rem; text-align: center; }
+		label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+		input[type="password"] { width: 100%; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.92); font-size: 1rem; color: inherit; transition: border-color .2s ease, box-shadow .2s ease; box-sizing: border-box; }
+		input[type="password"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
+		:root[data-theme="dark"] input[type="password"] { background: rgba(30, 41, 59, 0.85); }
+		button { margin-top: 1.5rem; width: 100%; padding: 0.9rem 1.5rem; border-radius: 999px; border: none; background: var(--accent); color: var(--accent-fg); font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform .15s ease, box-shadow .2s ease; }
+		button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28); }
+		.error { margin-top: 1rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.75rem 1rem; border-radius: 12px; text-align: center; font-weight: 500; }
+		@media (max-width: 420px) {
+			main { padding: 3rem 2.1rem 2.6rem; }
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<h1>Welcome back</h1>
+		<form method="post" action="/login">
+			<input type="hidden" name="next" value="{{ .Next }}" />
+			<label for="password">Password</label>
+			<input id="password" name="password" type="password" required autocomplete="current-password" />
+			<button type="submit">Log in</button>
+			{{ if .Error }}<div class="error">{{ .Error }}</div>{{ end }}
+		</form>
+	</main>
+</body>
+</html>
+{{ end }}

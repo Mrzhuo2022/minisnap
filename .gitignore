@@ -1,0 +1,55 @@
+# Git ignore patterns for MiniSnap
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+test-*
+bin/
+build/
+
+# Go test artifacts
+*.test
+*.out
+coverage.out
+
+# Go vendor directory
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Content directory (runtime generated)
+# Keep the folder but ignore generated files
+content/*
+!content/.gitkeep
+data/
+tmp-content/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+

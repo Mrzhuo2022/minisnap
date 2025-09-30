@@ -1,0 +1,153 @@
+{{ define "admin.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{{ .Title }}</title>
+	<style>
+		*, *::before, *::after { box-sizing: border-box; }
+		:root {
+			color-scheme: light dark;
+			--bg: #f1f5f9;
+			--fg: #0f172a;
+			--panel: #ffffff;
+			--surface: #f8fafc;
+			--border: rgba(148, 163, 184, 0.28);
+			--accent: #2563eb;
+			--accent-fg: #ffffff;
+			--muted: #64748b;
+			--shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+		}
+		:root[data-theme="dark"] {
+			--bg: #0f172a;
+			--fg: #e2e8f0;
+			--panel: #111827;
+			--surface: #182030;
+			--border: rgba(148, 163, 184, 0.2);
+			--accent: #8da2c9;
+			--accent-fg: #111827;
+			--muted: #94a3b8;
+			--shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+		}
+		body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; transition: background .3s ease, color .3s ease; }
+		.page { max-width: 880px; margin: 0 auto; padding: 3rem 2rem; display: flex; flex-direction: column; gap: 2rem; }
+		.masthead { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.75rem; flex-wrap: wrap; }
+		.title-block { flex: 1; display: flex; flex-direction: column; gap: 0.65rem; min-width: 240px; }
+		.title-block h1 { margin: 0; font-size: 1.85rem; line-height: 1.25; }
+		.meta { font-size: 0.9rem; color: var(--muted); display: flex; gap: 0.85rem; flex-wrap: wrap; }
+		.top-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; min-width: 200px; }
+		.nav-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 1rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; color: inherit; font-weight: 500; background: var(--surface); }
+		.nav-link:hover { border-color: var(--accent); color: var(--accent); }
+		.logout-form { margin: 0; }
+		.logout-form button { background: transparent; border: 1px solid var(--border); color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem; cursor: pointer; }
+		.logout-form button:hover { border-color: var(--accent); }
+		.editor-card { background: var(--panel); border-radius: 18px; padding: 2.35rem; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 1.5rem; }
+		#editor-form { display: flex; flex-direction: column; gap: 1.5rem; }
+		.field { display: flex; flex-direction: column; gap: 0.5rem; }
+		label { font-weight: 600; display: block; }
+		select { width: min(120px, 100%); padding: 0.6rem 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: inherit; box-sizing: border-box; }
+		textarea { width: 100%; min-height: 440px; font-family: "Fira Code", monospace; font-size: 0.95rem; padding: 1rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: inherit; resize: vertical; transition: border-color .2s ease, box-shadow .2s ease; box-sizing: border-box; }
+		input.description { width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: inherit; font-size: 0.95rem; box-sizing: border-box; transition: border-color .2s ease, box-shadow .2s ease; }
+		input.description:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
+		textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
+		.form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+		button.primary { background: var(--accent); color: var(--accent-fg); border: none; padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
+		button.primary:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22); }
+		button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
+		button.secondary:hover { background: var(--accent); color: var(--accent-fg); transform: translateY(-1px); }
+		.notice { margin: 0; font-size: 0.88rem; color: var(--muted); }
+		.hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
+		@media (max-width: 720px) {
+			.page { padding: 2.5rem 1.35rem 3.25rem; }
+			.masthead { flex-direction: column; align-items: stretch; gap: 1.5rem; }
+			.top-actions { justify-content: flex-start; }
+			.editor-card { padding: 1.85rem; }
+		}
+	</style>
+</head>
+<body>
+	<div class="page">
+		<header class="masthead">
+			<div class="title-block">
+				<h1>{{ .Title }}</h1>
+				{{ if or .PublishedAt .UpdatedAt }}
+				<div class="meta">
+					{{ if .PublishedAt }}<span>Published {{ .PublishedAt }}</span>{{ end }}
+					{{ if .UpdatedAt }}<span>Updated {{ .UpdatedAt }}</span>{{ end }}
+				</div>
+				{{ end }}
+			</div>
+			<div class="top-actions">
+				<a class="nav-link" href="/admin/library">Library</a>
+				<form class="logout-form" method="post" action="/logout">
+					<button type="submit">Log out</button>
+				</form>
+			</div>
+		</header>
+		<section class="editor-card">
+			<form id="editor-form" method="post" action="{{ .Action }}">
+				{{ if .SelectedSlug }}<input type="hidden" name="slug" value="{{ .SelectedSlug }}" />{{ end }}
+				<div class="field">
+					<label for="renderer">Renderer</label>
+					<select id="renderer" name="renderer">
+						<option value="markdown" {{ if eq .Renderer "markdown" }}selected{{ end }}>Markdown</option>
+						<option value="html" {{ if eq .Renderer "html" }}selected{{ end }}>Raw HTML</option>
+					</select>
+				</div>
+				<div class="field">
+					<label for="description">Description</label>
+					<input id="description" name="description" class="description" placeholder="Content description..." value="{{ .Description }}" />
+				</div>
+				<div class="field">
+					<label for="content">Content</label>
+					<textarea id="content" name="content" required>{{ .Content }}</textarea>
+				</div>
+				<div class="form-actions">
+					<button class="primary" type="submit">Save & Publish</button>
+					<button class="secondary" type="button" id="preview-btn">Preview</button>
+				</div>
+				<p class="notice">Entries are saved immediately after you publish them. You can revisit this page to edit at any time.</p>
+			</form>
+		</section>
+	</div>
+	<script>
+		document.getElementById('preview-btn').addEventListener('click', function() {
+			const form = document.getElementById('editor-form');
+			const formData = new FormData(form);
+			
+			// Show loading state
+			const previewBtn = this;
+			const originalText = previewBtn.textContent;
+			previewBtn.textContent = 'Previewing...';
+			previewBtn.disabled = true;
+			
+			// Create a form to submit to preview endpoint
+			const previewForm = document.createElement('form');
+			previewForm.method = 'POST';
+			previewForm.action = '/admin/preview';
+			previewForm.target = '_blank';
+			
+			// Add form data to the preview form
+			for (const [key, value] of formData.entries()) {
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.name = key;
+				input.value = value;
+				previewForm.appendChild(input);
+			}
+			
+			document.body.appendChild(previewForm);
+			previewForm.submit();
+			document.body.removeChild(previewForm);
+			
+			// Reset button state
+			setTimeout(() => {
+				previewBtn.textContent = originalText;
+				previewBtn.disabled = false;
+			}, 500);
+		});
+	</script>
+</body>
+</html>
+{{ end }}
