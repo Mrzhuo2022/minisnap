@@ -6,15 +6,18 @@ COPY go.mod ./
 COPY go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build go build -o /out/minisnap ./cmd/server
+ENV CGO_ENABLED=0 GOOS=linux
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    go build -ldflags='-s -w' -o /out/minisnap ./cmd/server
+# pre-create runtime directories since final image is distroless (no shell)
+RUN mkdir -p /out/content
 
-FROM alpine:3.21
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /app
-COPY --from=build /out/minisnap ./minisnap
-COPY templates ./templates
-# 在首次运行时如果宿主机未挂载，会自动生成 content 目录
-RUN mkdir -p /app/content
+COPY --from=build /out/minisnap /app/minisnap
+COPY templates /app/templates
+COPY --from=build /out/content /app/content
 
 ENV BIND_ADDR=":8080" \
     CONTENT_DIR="content"
