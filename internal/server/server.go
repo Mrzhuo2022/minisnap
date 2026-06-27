@@ -87,6 +87,11 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /", s.redirectAdmin)
 	s.mux.HandleFunc("GET /healthz", s.health)
 
+	// 静态资源（base.css / theme.js）：用 /-/ 前缀避免与 GET /{slug} 冲突。
+	// /-/static/base.css 是多段路径，不会被单段通配 {slug} 匹配。
+	staticServer := http.FileServer(http.FS(assetsSubFS))
+	s.mux.Handle("GET /-/static/", http.StripPrefix("/-/static/", staticServer))
+
 	s.mux.HandleFunc("GET /login", s.showLogin)
 	s.mux.HandleFunc("POST /login", s.handleLogin)
 	s.mux.HandleFunc("POST /logout", s.requireAuth(s.handleLogout))
@@ -312,13 +317,18 @@ func (s *Server) showEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 已登录访客（管理员）在阅读页可见编辑入口；普通访客不可见。
+	_, canEdit := s.authenticated(r)
+
 	s.renderTemplate(w, "view.tmpl", map[string]any{
 		"Title":            entry.Slug,
+		"Slug":             entry.Slug,
 		"HTML":             html,
 		"PublishedAt":      formatTime(entry.CreatedAt),
 		"UpdatedAt":        formatTime(entry.UpdatedAt),
 		"WasUpdated":       !entry.UpdatedAt.IsZero() && !entry.UpdatedAt.Equal(entry.CreatedAt),
 		"AllowThemeSwitch": entry.Renderer == content.RendererMarkdown,
+		"CanEdit":          canEdit,
 	})
 }
 

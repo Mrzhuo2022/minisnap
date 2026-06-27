@@ -1,55 +1,32 @@
 {{ define "library.tmpl" }}
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>{{ .Title }}</title>
+	<script>try{var t=localStorage.getItem('minisnap.theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+	<link rel="stylesheet" href="/-/static/base.css" />
+	<script src="/-/static/theme.js" defer></script>
 	<style>
-		:root {
-			color-scheme: light dark;
-			--bg: #f8fafc;
-			--fg: #0f172a;
-			--panel: #ffffff;
-			--surface: #f1f5f9;
-			--border: rgba(148, 163, 184, 0.28);
-			--accent: #2563eb;
-			--accent-fg: #ffffff;
-			--muted: #64748b;
-			--shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
-		}
-		:root[data-theme="dark"] {
-			--bg: #0f172a;
-			--fg: #e2e8f0;
-			--panel: #111827;
-			--surface: #182030;
-			--border: rgba(148, 163, 184, 0.2);
-			--accent: #8da2c9;
-			--accent-fg: #111827;
-			--muted: #94a3b8;
-			--shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
-		}
-		body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; transition: background .3s ease, color .3s ease; }
 		.page { max-width: 960px; margin: 0 auto; padding: 2.6rem 1.5rem 3.6rem; display: flex; flex-direction: column; gap: 1.9rem; }
 		header { display: flex; flex-direction: column; gap: 1.4rem; }
 		.title-block h1 { margin: 0; font-size: 1.85rem; }
 		.meta { font-size: 0.92rem; color: var(--muted); }
 		.top-actions { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
-		.nav-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 1rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; color: inherit; font-weight: 500; background: var(--surface); }
-		.nav-link:hover { border-color: var(--accent); color: var(--accent); }
-		.logout-form { margin: 0; }
-		.logout-form button { background: transparent; border: 1px solid var(--border); color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem; cursor: pointer; }
-		.logout-form button:hover { border-color: var(--accent); }
 		.search-card { background: var(--panel); border-radius: 22px; padding: 2.2rem; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 1.25rem; }
 		.search-form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
 		.search-form input { flex: 1; min-width: 220px; padding: 0.75rem 1rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
-		.search-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+		.search-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 		.search-form button { background: var(--accent); color: var(--accent-fg); border: none; padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
 		.search-form button:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(37, 99, 235, 0.25); }
 		.stats { font-size: 0.9rem; color: var(--muted); }
 		.entry-table { width: 100%; border-collapse: collapse; }
-		.entry-table th, .entry-table td { text-align: left; padding: 0.9rem 0.75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.2); vertical-align: top; }
+		.entry-table th, .entry-table td { text-align: left; padding: 0.9rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 		.entry-table th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+		/* #4 行 hover 高亮 */
+		.entry-table tbody tr { transition: background .15s ease; }
+		.entry-table tbody tr:hover { background: var(--surface); }
 		.entry-table td.actions { white-space: nowrap; }
 		.entry-table .sep { margin: 0 0.45rem; color: var(--muted); }
 		.entry-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
@@ -64,18 +41,24 @@
 		.empty { font-size: 1.05rem; color: var(--muted); text-align: center; padding: 2rem 0; }
 		.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.2rem 0.75rem; background: rgba(37, 99, 235, 0.12); color: var(--accent); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 		:root[data-theme="dark"] .badge { background: rgba(141, 162, 201, 0.16); }
-		.description { max-width: 460px; color: inherit; }
+		/* #4 描述截断：超长文本折叠为两行 */
+		.description { max-width: 460px; color: inherit; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 		@media (max-width: 900px) {
 			.entry-table thead { display: none; }
 			.entry-table, .entry-table tbody, .entry-table tr, .entry-table td { display: block; width: 100%; }
-			.entry-table tr { border-bottom: 1px solid rgba(148, 163, 184, 0.2); margin-bottom: 1.5rem; padding-bottom: 1.5rem; }
+			.entry-table tr { border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; padding-bottom: 1.5rem; }
 			.entry-table td { padding: 0.4rem 0; }
 			.entry-table td::before { content: attr(data-label); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.2rem; }
 			.entry-table td.actions { margin-top: 0.75rem; }
+			/* 移动端描述不截断 */
+			.description { -webkit-line-clamp: unset; }
 		}
 	</style>
 </head>
 <body>
+	<div class="ctrl-bar">
+		<button type="button" class="ctrl-btn" data-theme-toggle aria-label="Toggle theme"><span class="icon" aria-hidden="true">🌞</span></button>
+	</div>
 	<div class="page">
 		<header>
 			<div class="title-block">
@@ -140,7 +123,6 @@
 	</div>
 	<script>
 		(function () {
-			const buttons = document.querySelectorAll('.share-btn');
 			const copyToClipboard = async (text) => {
 				if (navigator.clipboard && navigator.clipboard.writeText) {
 					return navigator.clipboard.writeText(text);
@@ -158,7 +140,8 @@
 					success ? resolve() : reject(new Error('copy failed'));
 				});
 			};
-			buttons.forEach((btn) => {
+
+			document.querySelectorAll('.share-btn').forEach((btn) => {
 				const originalText = btn.textContent;
 				btn.addEventListener('click', async () => {
 					const url = new URL(btn.dataset.url, window.location.origin).href;
