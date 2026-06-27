@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"html/template"
@@ -22,6 +23,7 @@ type Server struct {
 	mux       *http.ServeMux
 	templates *template.Template
 	sessions  *sessionStore
+	loginLim  *loginLimiter
 }
 
 type entryListItem struct {
@@ -70,6 +72,7 @@ func New(cfg config.Config, store *content.Store, tplDir string) (*Server, error
 		templates: tpls,
 		mux:       http.NewServeMux(),
 		sessions:  newSessionStore(),
+		loginLim:  newLoginLimiter(5, time.Minute, time.Minute),
 	}
 	s.registerRoutes()
 	return s, nil
@@ -178,8 +181,23 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clientIP := ipFromRequest(r)
+
+	// 登录限流：锁定期间直接拒绝，不校验密码。
+	if s.loginLim.isLocked(clientIP, time.Now()) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		s.renderTemplate(w, "login.tmpl", map[string]any{
+			"Title": "Login",
+			"Error": "Too many failed attempts, please try again later",
+			"Next":  r.FormValue("next"),
+		})
+		return
+	}
+
 	password := r.FormValue("password")
-	if password != s.cfg.AdminPassword {
+	// 恒定时间比较，避免基于响应时间的侧信道猜测密码。
+	if subtle.ConstantTimeCompare([]byte(password), []byte(s.cfg.AdminPassword)) != 1 {
+		s.loginLim.recordFailure(clientIP, time.Now())
 		s.renderTemplate(w, "login.tmpl", map[string]any{
 			"Title": "Login",
 			"Error": "Incorrect password",
@@ -188,6 +206,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.loginLim.recordSuccess(clientIP)
 	s.setSession(w)
 	next := r.FormValue("next")
 	if next == "" {
