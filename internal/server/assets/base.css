@@ -1,0 +1,81 @@
+/* MiniSnap 公共样式：所有页面共享。
+   统一亮/暗主题变量（消除原先各模板不一致的色值）、基础重置、公共组件。 */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+	color-scheme: light dark;
+	/* 亮色主题 */
+	--bg: #f8fafc;
+	--fg: #0f172a;
+	--panel: #ffffff;
+	--surface: #f1f5f9;
+	--border: rgba(148, 163, 184, 0.28);
+	--accent: #2563eb;
+	--accent-fg: #ffffff;
+	--accent-alt: #2563eb;
+	--muted: #64748b;
+	--code-bg: #f1f5f9;
+	--shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+	--focus-ring: rgba(37, 99, 235, 0.18);
+}
+
+:root[data-theme="dark"] {
+	/* 暗色主题：以阅读页既有的深色为基准统一 */
+	--bg: #1d2228;
+	--fg: #e2e8f0;
+	--panel: #111827;
+	--surface: #182030;
+	--border: rgba(148, 163, 184, 0.2);
+	--accent: #8da2c9;
+	--accent-fg: #111827;
+	--accent-alt: #8da2c9;
+	--muted: #9ca3af;
+	--code-bg: #1f2937;
+	--shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+	--focus-ring: rgba(141, 162, 201, 0.22);
+}
+
+body {
+	margin: 0;
+	font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	background: var(--bg);
+	color: var(--fg);
+	min-height: 100vh;
+	transition: background .3s ease, color .3s ease;
+}
+
+/* 阅读页字号档位：由 <html data-font="..."> 驱动，仅 view 页面使用 */
+html[data-font="sm"] body { font-size: 15px; }
+html[data-font="md"] body { font-size: 18px; }
+html[data-font="lg"] body { font-size: 21px; }
+html[data-font="xl"] body { font-size: 24px; }
+
+a { color: var(--accent); }
+
+code { font-family: "Fira Code", monospace; }
+
+/* 右上角悬浮控件栏（主题切换 / 字号，圆形按钮） */
+.ctrl-bar { position: fixed; top: 1.6rem; right: 1.6rem; display: inline-flex; align-items: center; gap: 0.5rem; z-index: 10; }
+.ctrl-btn { border: none; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.35); color: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16); }
+.ctrl-btn:hover { background: rgba(148, 163, 184, 0.5); }
+.ctrl-btn:disabled { opacity: 0.45; cursor: default; }
+.ctrl-btn .icon { font-weight: 400; }
+
+/* 公共按钮 */
+.btn-primary, .btn-secondary { padding: 0.75rem 1.6rem; border-radius: 999px; font-weight: 600; cursor: pointer; border: none; transition: transform .15s ease, box-shadow .2s ease, background .2s ease; }
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22); }
+.btn-secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn-secondary:hover { background: var(--accent); color: var(--accent-fg); transform: translateY(-1px); }
+
+/* 导航链接与登出（admin/library 共用） */
+.nav-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 1rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; color: inherit; font-weight: 500; background: var(--surface); }
+.nav-link:hover { border-color: var(--accent); color: var(--accent); }
+.logout-form { margin: 0; }
+.logout-form button { background: transparent; border: 1px solid var(--border); color: inherit; border-radius: 999px; padding: 0.45rem 1.1rem; cursor: pointer; }
+.logout-form button:hover { border-color: var(--accent); }
+
+@media (max-width: 720px) {
+	.ctrl-bar { top: 1.25rem; right: 1.25rem; }
+}

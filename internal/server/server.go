@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"html/template"
@@ -22,6 +23,7 @@ type Server struct {
 	mux       *http.ServeMux
 	templates *template.Template
 	sessions  *sessionStore
+	loginLim  *loginLimiter
 }
 
 type entryListItem struct {
@@ -70,6 +72,7 @@ func New(cfg config.Config, store *content.Store, tplDir string) (*Server, error
 		templates: tpls,
 		mux:       http.NewServeMux(),
 		sessions:  newSessionStore(),
+		loginLim:  newLoginLimiter(5, time.Minute, time.Minute),
 	}
 	s.registerRoutes()
 	return s, nil
@@ -83,6 +86,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /", s.redirectAdmin)
 	s.mux.HandleFunc("GET /healthz", s.health)
+
+	// 静态资源（base.css / theme.js）：用 /-/ 前缀避免与 GET /{slug} 冲突。
+	// /-/static/base.css 是多段路径，不会被单段通配 {slug} 匹配。
+	staticServer := http.FileServer(http.FS(assetsSubFS))
+	s.mux.Handle("GET /-/static/", http.StripPrefix("/-/static/", staticServer))
 
 	s.mux.HandleFunc("GET /login", s.showLogin)
 	s.mux.HandleFunc("POST /login", s.handleLogin)
@@ -178,8 +186,23 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clientIP := ipFromRequest(r)
+
+	// 登录限流：锁定期间直接拒绝，不校验密码。
+	if s.loginLim.isLocked(clientIP, time.Now()) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		s.renderTemplate(w, "login.tmpl", map[string]any{
+			"Title": "Login",
+			"Error": "Too many failed attempts, please try again later",
+			"Next":  r.FormValue("next"),
+		})
+		return
+	}
+
 	password := r.FormValue("password")
-	if password != s.cfg.AdminPassword {
+	// 恒定时间比较，避免基于响应时间的侧信道猜测密码。
+	if subtle.ConstantTimeCompare([]byte(password), []byte(s.cfg.AdminPassword)) != 1 {
+		s.loginLim.recordFailure(clientIP, time.Now())
 		s.renderTemplate(w, "login.tmpl", map[string]any{
 			"Title": "Login",
 			"Error": "Incorrect password",
@@ -188,6 +211,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.loginLim.recordSuccess(clientIP)
 	s.setSession(w)
 	next := r.FormValue("next")
 	if next == "" {
@@ -293,13 +317,18 @@ func (s *Server) showEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 已登录访客（管理员）在阅读页可见编辑入口；普通访客不可见。
+	_, canEdit := s.authenticated(r)
+
 	s.renderTemplate(w, "view.tmpl", map[string]any{
 		"Title":            entry.Slug,
+		"Slug":             entry.Slug,
 		"HTML":             html,
 		"PublishedAt":      formatTime(entry.CreatedAt),
 		"UpdatedAt":        formatTime(entry.UpdatedAt),
 		"WasUpdated":       !entry.UpdatedAt.IsZero() && !entry.UpdatedAt.Equal(entry.CreatedAt),
 		"AllowThemeSwitch": entry.Renderer == content.RendererMarkdown,
+		"CanEdit":          canEdit,
 	})
 }
 
