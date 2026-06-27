@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -144,7 +145,9 @@ func (s *Store) List() ([]Entry, error) {
 		slugID := strings.TrimSuffix(f.Name(), filepath.Ext(f.Name()))
 		entry, err := s.read(slugID)
 		if err != nil {
-			return nil, err
+			// 跳过损坏或不可读的条目，避免单条坏数据导致整个内容库不可用。
+			slog.Warn("skipping unreadable entry", "slug", slugID, "file", f.Name(), "error", err)
+			continue
 		}
 		entries = append(entries, entry)
 	}

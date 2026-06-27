@@ -110,6 +110,33 @@ func TestStoreList(t *testing.T) {
 	}
 }
 
+func TestStoreListSkipsCorruptEntries(t *testing.T) {
+	root := t.TempDir()
+	store, err := NewStore(root)
+	if err != nil {
+		t.Fatalf("new store: %v", err)
+	}
+
+	// 写入一条正常条目
+	if _, err := store.Create(RendererMarkdown, "good entry", "ok"); err != nil {
+		t.Fatalf("create entry: %v", err)
+	}
+
+	// 写入一条损坏的 JSON 文件
+	if err := os.WriteFile(filepath.Join(root, "corrupt.json"), []byte("{not valid json"), 0o644); err != nil {
+		t.Fatalf("write corrupt file: %v", err)
+	}
+
+	// List 应成功，仅返回正常条目，跳过损坏的
+	entries, err := store.List()
+	if err != nil {
+		t.Fatalf("list should tolerate corrupt entries, got error: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 valid entry (corrupt skipped), got %d", len(entries))
+	}
+}
+
 func TestStoreDelete(t *testing.T) {
 	root := t.TempDir()
 	store, err := NewStore(root)
